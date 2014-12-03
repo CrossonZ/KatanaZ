@@ -86,8 +86,7 @@ int main()
 
 		pArena->Apply(conListA, conListB);
 		int iRet = pArena->AutoGame();
-		printf("result:%d\n",iRet);
-	/*	Sleep(2000);*/
+		printf("result:%d\n",iRet);*/
 		system("pause");
 	//}
 	return 0;
