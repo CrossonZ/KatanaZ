@@ -13,7 +13,9 @@ int CUDPSocket::Bind(CConnectionManager *pEH, const WORD wPort, const bool bBloc
 		return -1;
 
 	SetSockOpt(bBlocking, bIPHdr);
+#if USE_BOOST == 1
 	m_funcOnRecv = boost::bind(&CConnectionManager::OnRecv, m_pEH, _1);
+#endif
 #if TYPE_SERVER == 1
 	return ::bind(m_sock, (sockaddr*)&m_sAddr, sizeof(m_sAddr));
 #else
@@ -95,9 +97,13 @@ void CUDPSocket::RecvFromSocket()
 
 			if (pRS->iLen >= NETWORK_PKG_HEAD_LEN)
 			{
+#if USE_BOOST == 1
 				if (!m_funcOnRecv(pRS))
+#else
+				if (!m_pEH->OnRecv(pRS))
+#endif
 				{
-					printf("-------------FUCK------------\n");
+					//printf("-------------FUCK------------\n");
 					m_pEH->DeallocRecvStruct(pRS);
 				}
 			}
@@ -111,7 +117,7 @@ void CUDPSocket::RecvFromSocket()
 		}
 		else
 		{
-			printf("--------------------FUCKING-----------------------------------\n");
+			//printf("--------------------FUCKING-----------------------------------\n");
 			exit(-1);
 		}
 	}

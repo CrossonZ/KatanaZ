@@ -1,5 +1,5 @@
 #include "../net/ConnectionManager.h"
-#include "../game/Arena.h"
+//#include "../game/Arena.h"
 #include <time.h>
 int main()
 {
@@ -87,7 +87,7 @@ int main()
 		pArena->Apply(conListA, conListB);
 		int iRet = pArena->AutoGame();
 		printf("result:%d\n",iRet);*/
-		system("pause");
+		//system("pause");
 	//}
 	return 0;
 }

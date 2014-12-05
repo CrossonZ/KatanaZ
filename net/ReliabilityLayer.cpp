@@ -204,7 +204,7 @@ bool CReliabilityLayer::HandleSplitPkg(SCommonPkg *pCP, int iPkgSeq)
 			iOffset += pCommon->sCPH.iLen-4;
 			if (pCommon->pRS == NULL)
 			{
-				printf("FUCKING occurs!\n");
+				//printf("FUCKING occurs!\n");
 			}
 			else
 			{
@@ -214,7 +214,7 @@ bool CReliabilityLayer::HandleSplitPkg(SCommonPkg *pCP, int iPkgSeq)
 		memcpy(pSP->pBuf+iOffset, pCP->szBuf+4, pCP->sCPH.iLen-4);
 		if (pCP->pRS == NULL)
 		{
-			printf("FUCKING occurs!\n");
+			//printf("FUCKING occurs!\n");
 		}
 		else
 		{
@@ -526,7 +526,7 @@ void CReliabilityLayer::HandleSendWindow(int iAckSeq)
 		int i, iLast = m_iLastDeleteOffset+iAckSeq-m_iLastACKSeq - 1;
 		if (iLast < 0 || iLast >= m_conSendWindow.size())
 		{
-			printf("Fucking Occurs, iLast:%d , m_conSendWindowSize:%d\n",iLast, m_conSendWindow.size());
+			//printf("Fucking Occurs, iLast:%d , m_conSendWindowSize:%d\n",iLast, m_conSendWindow.size());
 			return;
 		}
 

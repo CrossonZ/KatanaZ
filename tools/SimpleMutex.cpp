@@ -21,7 +21,7 @@ CSimpleMutex::~CSimpleMutex()
 
 }
 
-#ifdef _DEBUG && _WIN32
+#ifdef _DEBUG 
 #include <stdio.h>
 #endif
 
@@ -46,7 +46,7 @@ void CSimpleMutex::Unlock(void)
 
 void CSimpleMutex::Init(void)
 {
-#if defined(_WIN32)
+#ifdef _WIN32
 	//	hMutex = CreateMutex(NULL, FALSE, 0);
 	//	RakAssert(hMutex);
 	InitializeCriticalSection(&criticalSection);
