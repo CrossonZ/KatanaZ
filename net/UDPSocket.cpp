@@ -28,10 +28,10 @@ int CUDPSocket::Bind(CConnectionManager *pEH, const WORD wPort, const bool bBloc
 
 void CUDPSocket::SetSockOpt(const bool bBlocking, const bool bIPHdr)
 {
+#ifdef _WIN32
 	int sock_opt=1024*256;
 	setsockopt(m_sock, SOL_SOCKET, SO_RCVBUF, (char *)&sock_opt, sizeof(sock_opt));
-
-
+	
 	// Immediate hard close. Don't linger the socket, or recreating the socket quickly on Vista fails.
 	// Fail with voice and xbox
 
@@ -56,6 +56,9 @@ void CUDPSocket::SetSockOpt(const bool bBlocking, const bool bIPHdr)
 	BOOL BNewBehavior = FALSE;
 	DWORD dwBytesReturned = 0;
 	WSAIoctl(m_sock, SIO_UDP_CONNRESET, &BNewBehavior, sizeof(BNewBehavior), NULL, 0, &dwBytesReturned, NULL, NULL);
+#else
+
+#endif
 }
 
 void CUDPSocket::HandleRecv(SRecvStruct *pRS)
@@ -65,11 +68,15 @@ void CUDPSocket::HandleRecv(SRecvStruct *pRS)
 	while (1)
 	{
 		pRS->iLen = recvfrom(m_sock, pRS->szBuf, sizeof(pRS->szBuf), flag, (sockaddr *)&pRS->sAddr, &iLen);
+#ifdef _WIN32
 		if (pRS->iLen < 0 && WSAGetLastError() == WSAEWOULDBLOCK)
 		{
 			Sleep(50);
 			continue;
 		}
+#else
+
+#endif
 		break;
 	}
 }
@@ -125,15 +132,23 @@ void CUDPSocket::SendToSocket()
 		while (1)
 		{
 			iSent = sendto(this->m_sock, pSS->pBuf+iOffset, pSS->iLen-iOffset, 0, (sockaddr*)&pSS->sAddr, sizeof(pSS->sAddr));
+#ifdef _WIN32
 			if (iSent == -1 && WSAGetLastError() == WSAEWOULDBLOCK)
 			{
 				Sleep(10);
 				continue;
 			}
+#else 
+			if (1)
+			{
+
+			}
+#endif
 			else if ((iOffset += iSent) == pSS->iLen)
 			{
 				break;
 			}
+
 		}
 		if(pSS->eSPF == SPF_NO_ACK)
 		{
