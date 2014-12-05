@@ -1,9 +1,9 @@
 #include "ConnectionManager.h"
 #include "../tools/UDPThread.h"
 #include "../tools/Utility.h"
-#include <time.h>
-#include <boost/bind.hpp>
 #include "../game/LogicThread.h"
+#include <time.h>
+
 #define BUFSIZE 1024
 ;
 
@@ -12,6 +12,7 @@
 //#define new new(__FILE__, __LINE__)
 #endif
 
+#ifdef _WIN32
 unsigned __stdcall StartRecvThread(void *arguments)
 {
 	CUDPSocket *pSock = (CUDPSocket *)arguments;
@@ -32,6 +33,29 @@ unsigned __stdcall StartLogicThread(void *arguments)
 	pLT->ThreadLoop();
 	return 1;
 }
+
+#else
+void *StartRecvThread(void *arguments)
+{
+	CUDPSocket *pSock = (CUDPSocket *)arguments;
+	pSock->RecvFromSocket();
+	return 0;
+}
+//
+void *StartSendThread(void *arguments)
+{
+	CUDPSocket *pSock = (CUDPSocket *)arguments;//pArg->pSocket;
+	pSock->SendToSocket();
+	return 0;
+}
+
+void *StartLogicThread(void *arguments)
+{
+	CLogicThread *pLT = (CLogicThread *)arguments;
+	pLT->ThreadLoop();
+	return 0;
+}
+#endif
 
 /*VOID NTAPI StartSendCallBack(PTP_CALLBACK_INSTANCE pInstance, PVOID pvContext, PTP_WORK Work)
 {
@@ -87,17 +111,20 @@ void CConnectionManager::UnInit()
 		*itList = NULL;
 	}
 	m_conSocketList.clear();
-	WSACleanup(); 
+#ifdef _WIND32
+	WSACleanup();
+#endif
 }
 
 bool CConnectionManager::Start(vector<WORD> &conPortVector)
 {
+#ifdef _WIN32
 	if (WSAStartup(MAKEWORD(2, 2), &m_wsaData) != 0)  
 	{  
 		perror("failed to load winsock!\n");  
 		return false;  
 	}  
-
+#endif
 	m_tvTimer.tv_sec = 6;   
 	m_tvTimer.tv_usec = 0; 
 
@@ -107,7 +134,7 @@ bool CConnectionManager::Start(vector<WORD> &conPortVector)
 		pSocket = new CUDPSocket;
 		if (pSocket == NULL)
 		{
-			perror("Create socket error!\n");
+			//perror("Create socket error!\n");
 			return false;
 		}
 		int iRet = -1;
@@ -118,19 +145,24 @@ bool CConnectionManager::Start(vector<WORD> &conPortVector)
 #endif
 		if (iRet < 0)
 		{
-			perror("Bind error!\n");
+			//perror("Bind error!\n");
 			return false;
 		}
 		m_conSocketList.push_back(pSocket);
+
 		CUDPThread::Create(&StartRecvThread, pSocket, 0);
 		CUDPThread::Create(&StartSendThread, pSocket, 0);
+
+
 	}
 
 	CLogicThread *pLT = NULL;
 	for (unsigned int i=0;i<4;++i)
 	{
 		pLT = new CLogicThread;
+
 		CUDPThread::Create(&StartLogicThread, pLT, 0);
+
 		/*m_funcAddRLCallback = boost::bind(&CLogicThread::AddReliabilityLayer, pLT, _1);
 		m_funcAddRSCallback = boost::bind(&CLogicThread::PushRS, pLT, _1);*/
 		m_conLTList.push_back(pLT);
@@ -158,7 +190,7 @@ void CConnectionManager::ThreadLoop()
 			pNPH = pRS->GetNetworkPkg();
 			if (pNPH == NULL)
 			{
-				printf("Fucking error occurs, Fatal NPH\n");
+				//printf("Fucking error occurs, Fatal NPH\n");
 				DeallocRecvStruct(pRS);
 				continue;
 			}
@@ -694,12 +726,12 @@ void CConnectionManager::RecycleReliableLayer(CReliabilityLayer *pRL)
 #else
 	--m_iRLUsed;
 	delete pRL;
-	printf ("DELTE RL\n");
-	printf("m_iRLUsed=%d,m_iBufferUsed=%d,m_iNPUsed=%d\n",m_iRLUsed, m_iBufferUsed,m_iNPUsed);
-	printf("m_iRSUsed=%d,m_iSSUsed=%d,m_iSPUsed=%d,m_iSTAUsed=%d\n",m_iRSUsed,m_iSSUsed,m_iSPUsed,m_iSTAUsed);
+	//printf ("DELTE RL\n");
+	//printf("m_iRLUsed=%d,m_iBufferUsed=%d,m_iNPUsed=%d\n",m_iRLUsed, m_iBufferUsed,m_iNPUsed);
+	//printf("m_iRSUsed=%d,m_iSSUsed=%d,m_iSPUsed=%d,m_iSTAUsed=%d\n",m_iRSUsed,m_iSSUsed,m_iSPUsed,m_iSTAUsed);
 	if (m_iRLUsed == 0)
 	{
-		printf("RSbuffer:%d, iPush:%d, iPop:%d, iAlloc:%d\n",gpConnectionManager->m_conRSQueue.size(), gpConnectionManager->g_iPushTimes, gpConnectionManager->g_iPopTimes, gpConnectionManager->g_iAllocTimes);
+		//printf("RSbuffer:%d, iPush:%d, iPop:%d, iAlloc:%d\n",gpConnectionManager->m_conRSQueue.size(), gpConnectionManager->g_iPushTimes, gpConnectionManager->g_iPopTimes, gpConnectionManager->g_iAllocTimes);
 	}
 #endif
 }

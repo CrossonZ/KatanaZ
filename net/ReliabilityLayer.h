@@ -121,7 +121,8 @@ private:
 	int m_iResendTimes;
 
 	//////////////////
-	HANDLE pFile;
+
+	//HANDLE pFile;
 }
 
 #endif

@@ -21,6 +21,8 @@
 
 #define USE_PACKET_LOST_CHECK 
 
+#define USE_BOOST 0
+
 #ifdef _WIN32
 #include <WinSock2.h>
 #include <windows.h>
@@ -32,6 +34,9 @@
 #include <arpa/inet.h>    
 #include <fcntl.h>    
 #include <unistd.h>
+#include <cstdlib>
+#include <cstdio>
+#include <string.h>
 #endif
 
 #define UINT64 unsigned long long
@@ -48,6 +53,10 @@
 #include <iostream>
 #include <stdlib.h>
 using namespace std;
+#endif
+
+#ifndef _WIN32
+#define Sleep sleep
 #endif
 
 #endif

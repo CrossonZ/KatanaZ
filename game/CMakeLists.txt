@@ -1,0 +1,6 @@
+include_directories(${PROJECT_SOURCE_DIR}/main)
+include_directories(${PROJECT_SOURCE_DIR}/net)
+include_directories(${PROJECT_SOURCE_DIR}/tools)
+set(GAME_SRC LogicThread.cpp)
+add_library(libgame ${GAME_SRC})
+set_target_properties(libgame PROPERTIES OUTPUT_NAME "game")

@@ -1,0 +1,5 @@
+include_directories(${PROJECT_SOURCE_DIR}/main)
+include_directories(${PROJECT_SOURCE_DIR}/tools)
+set(NET_SRC ConnectionManager.cpp ReliabilityLayer.cpp UDPSocket.cpp)
+add_library(libnet ${NET_SRC})
+set_target_properties(libnet PROPERTIES OUTPUT_NAME "net")

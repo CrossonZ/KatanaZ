@@ -18,7 +18,11 @@ public:
 
 private:
 	void Init(void);
+#ifdef _WIN32
 	CRITICAL_SECTION criticalSection; /// Docs say this is faster than a mutex for single process access
+#else
+	pthread_mutex_t hMutex;
+#endif
 };
 
 #endif

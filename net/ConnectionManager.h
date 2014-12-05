@@ -11,12 +11,18 @@
 
 #include "../tools/Singleton.h"
 #include "../tools/SimpleMutex.h"
+#if USE_POOL == 1
 #include "../tools/ObjectPool.h"
+#endif
 #include "ReliabilityLayer.h"
 #include "UDPSocket.h"
 #include <queue>
 ;
+
+#if USE_BOOST == 1
 #include <boost/function.hpp>
+#endif
+
 struct SBuf32: public SObject
 {
 	char szBuf[32];
@@ -62,11 +68,18 @@ struct SValidPacketMax: public SObject
 	char szBuf[MAX_VALID_SIZE];
 };
 
+#ifdef _WIN32
 
 unsigned __stdcall StartRecvThread(void *arguments);
 unsigned __stdcall StartSendThread(void *arguments);
 
 unsigned __stdcall StartLogicThread(void *arguments);
+#else 
+void *StartRecvThread(void *arguments);
+void *StartSendThread(void *arguments);
+
+void *StartLogicThread(void *arguments);
+#endif 
 
 //VOID NTAPI StartSendCallBack(PTP_CALLBACK_INSTANCE pInstance, PVOID pvContext, PTP_WORK Work);
 //
@@ -74,8 +87,12 @@ unsigned __stdcall StartLogicThread(void *arguments);
 
 class CLogicThread;
 class CReliabilityLayer;
+
+#if USE_BOOST == 1
 typedef boost::function<bool(CReliabilityLayer*)> AddRLCallback;
 typedef boost::function<void(SRecvStruct *)> AddRSCallback;
+#endif
+
 class CConnectionManager /*: public CEventHandler*/
 {
 	DECLARE_SINGLETON_CLASS(CConnectionManager)
@@ -98,9 +115,9 @@ public:
 	list<CLogicThread*> m_conLTList;
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	virtual bool OnRecv(SRecvStruct *pRS);
-	virtual void DeallocRecvStruct(SRecvStruct *pRS);
-	virtual SRecvStruct *AllocRecvStruct();
+	bool OnRecv(SRecvStruct *pRS);
+	SRecvStruct *AllocRecvStruct();
+	void DeallocRecvStruct(SRecvStruct *pRS);
 
 	SSendStruct *AllocSendStruct();
 	void DeallocSendStruct(SSendStruct *pSS);
@@ -176,7 +193,9 @@ public:
 	int g_iAllocTimes;
 
 private:
+#ifdef _WIN32
 	WSADATA m_wsaData; // 套接字信息数据
+#endif
 
 	//用于select
 	timeval m_tvTimer;    // 定时变量  

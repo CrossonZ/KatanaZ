@@ -2,6 +2,7 @@
 #include "ConnectionManager.h"
 #include <time.h>
 #include <stdio.h>
+#include <math.h>
 
 void CReliabilityLayer::SetAddr(sockaddr_in &sAddr)
 {
@@ -156,7 +157,7 @@ bool CReliabilityLayer::PushNetworkPkg(SNetworkPkg *pPkg)
 	gpConnectionManager->DeallocNetworkPkg(pPkg);
 	SSendWindow sSW;
 	sSW.pSS = pSS;
-	sSW.dwSendTime = GetTickCount();
+	//sSW.dwSendTime = GetTickCount();
 	sSW.iResendTimes = 0;
 	m_SendWindowMutex.Lock();
 	m_conSendWindow.push_back(sSW);
@@ -204,7 +205,7 @@ bool CReliabilityLayer::HandleSplitPkg(SCommonPkg *pCP, int iPkgSeq)
 			iOffset += pCommon->sCPH.iLen-4;
 			if (pCommon->pRS == NULL)
 			{
-				printf("FUCKING occurs!\n");
+				//printf("FUCKING occurs!\n");
 			}
 			else
 			{
@@ -214,7 +215,7 @@ bool CReliabilityLayer::HandleSplitPkg(SCommonPkg *pCP, int iPkgSeq)
 		memcpy(pSP->pBuf+iOffset, pCP->szBuf+4, pCP->sCPH.iLen-4);
 		if (pCP->pRS == NULL)
 		{
-			printf("FUCKING occurs!\n");
+			//printf("FUCKING occurs!\n");
 		}
 		else
 		{
@@ -373,7 +374,9 @@ int CReliabilityLayer::HandleSendPkg()
 				{
 					PushNetworkPkg(m_pCurrentNP);
 				}
-				iCurrentLen = min(pSP->iLen-iOffset, MAX_MTU_SIZE-sizeof(SCommonPkgHead)-sizeof(int));
+				int iSmall1 = pSP->iLen-iOffset;
+				int iSmall2 = MAX_MTU_SIZE-sizeof(SCommonPkgHead)-sizeof(int);
+				iCurrentLen = min(iSmall1, iSmall2);
 				m_pCurrentNP = gpConnectionManager->AllocNetworkPkg();
 				m_pCurrentNP->sNPH.byPkgType = NPT_COMMON_MSG;
 				m_pCurrentNP->sNPH.qwToken = m_qwToken;
@@ -406,7 +409,7 @@ int CReliabilityLayer::HandleSendPkg()
 
 int CReliabilityLayer::CheckResendPkg()
 {
-	DWORD dwTickCount = GetTickCount();
+	DWORD dwTickCount = 0;//GetTickCount();
 	int  iStatus = NS_IDLE;
 	int i=0;
 	m_SendWindowMutex.Lock();
@@ -522,11 +525,11 @@ void CReliabilityLayer::HandleSendWindow(int iAckSeq)
 {
 	if (iAckSeq > m_iLastACKSeq)
 	{
-		DWORD dwTick = GetTickCount();
+		DWORD dwTick = 0;//GetTickCount();
 		int i, iLast = m_iLastDeleteOffset+iAckSeq-m_iLastACKSeq - 1;
 		if (iLast < 0 || iLast >= m_conSendWindow.size())
 		{
-			printf("Fucking Occurs, iLast:%d , m_conSendWindowSize:%d\n",iLast, m_conSendWindow.size());
+			//printf("Fucking Occurs, iLast:%d , m_conSendWindowSize:%d\n",iLast, m_conSendWindow.size());
 			return;
 		}
 
