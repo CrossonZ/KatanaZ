@@ -94,9 +94,6 @@ public:
 	CLogicThread* GetLT(const UINT64 qwToken);
 	void RecordRL(UINT64 qwToken, sockaddr_in sAddr, CLogicThread *pLT);
 
-	//AddRLCallback m_funcAddRLCallback;
-	//AddRSCallback m_funcAddRSCallback;
-
 	map<UINT64, CLogicThread*>  m_conRL2LTMap;
 	list<CLogicThread*> m_conLTList;
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -116,9 +113,6 @@ public:
 
 	SNetworkPkg *AllocNetworkPkg();
 	void DeallocNetworkPkg(SNetworkPkg *pNP);
-
-	//SCommonPkg *AllocCommonPkg();
-	//void DeallocCommonPkg(SCommonPkg *pCP);
 
 	char *AllocBuffer(const int iSize);
 	void DeallocBuffer(char *pBuf, const int iSize);
@@ -142,10 +136,6 @@ public:
 
 	SSendStruct *CreateConnectReq(sockaddr_in sAddr, CReliabilityLayer *pRL);
 	SSendStruct *CreateConnectRsp(UINT64 qwToken, sockaddr_in sAddr, CReliabilityLayer *pRL);
-
-/*	bool HandleConnection();
-
-	int TraverseConnections()*/;
 
 	void SetMyToken(const UINT64 qwToken) {m_qwMyToken = qwToken;}
 	UINT64 GetMyToken() const {return m_qwMyToken;}

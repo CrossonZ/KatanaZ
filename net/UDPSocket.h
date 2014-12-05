@@ -9,18 +9,6 @@
 
 #define SIO_UDP_CONNRESET _WSAIOW(IOC_VENDOR,12)
 
-//class CEventHandler
-//{
-//public:
-//	CEventHandler() {}
-//	virtual ~CEventHandler() {}
-//
-//	virtual bool OnRecv(SRecvStruct *pRS);
-//	virtual void DeallocRecvStruct(SRecvStruct *pRS);
-//
-//	virtual SRecvStruct *AllocRecvStruct();
-//};
-
 typedef boost::function<bool(SRecvStruct*)> OnRecvCallBack;
 
 class CConnectionManager;
@@ -31,7 +19,7 @@ public:
 	virtual ~CUDPSocket() {;}
 	int Bind(CConnectionManager *pEH, const WORD wPort, const bool bBlocking, const bool bIPHdr);
 	void RecvFromSocket();
-	void SendToSocket(/*SSendStruct *pSS*/);
+	void SendToSocket();
 	SOCKET GetSocket() {return m_sock;}
 
 private:

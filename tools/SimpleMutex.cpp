@@ -21,10 +21,8 @@ CSimpleMutex::~CSimpleMutex()
 
 }
 
-#ifdef _WIN32
-#ifdef _DEBUG
+#ifdef _DEBUG && _WIN32
 #include <stdio.h>
-#endif
 #endif
 
 void CSimpleMutex::Lock(void)
@@ -41,32 +39,20 @@ void CSimpleMutex::Unlock(void)
 #ifdef _WIN32
 	//	ReleaseMutex(hMutex);
 	LeaveCriticalSection(&criticalSection);
-
-
-
-
-
-
 #else
 	int error = pthread_mutex_unlock(&hMutex);
-	(void) error;
-	RakAssert(error==0);
 #endif
 }
 
 void CSimpleMutex::Init(void)
 {
-#if defined(WINDOWS_PHONE_8) || defined(WINDOWS_STORE_RT)
-	InitializeCriticalSectionEx(&criticalSection,0,CRITICAL_SECTION_NO_DEBUG_INFO);
-#elif defined(_WIN32)
+#if defined(_WIN32)
 	//	hMutex = CreateMutex(NULL, FALSE, 0);
 	//	RakAssert(hMutex);
 	InitializeCriticalSection(&criticalSection);
 
 #else
 	int error = pthread_mutex_init(&hMutex, 0);
-	(void) error;
-	RakAssert(error==0);
 #endif
 
 }
