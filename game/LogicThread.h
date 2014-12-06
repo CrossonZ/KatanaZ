@@ -2,9 +2,7 @@
 #define __INCLUDED_LOGIC_THREAD_H_
 #include "../tools/SimpleMutex.h"
 #include "../net/NetStructDefs.h"
-;
 #include <queue>
-class CReliabilityLayer;
 class CLogicThread
 {
 public:

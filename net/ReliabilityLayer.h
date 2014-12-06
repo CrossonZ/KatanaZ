@@ -123,6 +123,6 @@ private:
 	//////////////////
 
 	//HANDLE pFile;
-}
+};
 
 #endif

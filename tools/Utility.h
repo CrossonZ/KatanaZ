@@ -1,17 +1,16 @@
 #ifndef __INCLUDED_UTILITY_H_
 #define __INCLUDED_UTILITY_H_
+
 #ifdef _WIN32
 #include <objbase.h>
+#else
+#include <sys/time.h>
+static struct  timeval  g_startTime;
+static struct  timeval  g_currentTime;
+unsigned int GetTickCount();
 #endif
-UINT64 g_GUID = 1;
-UINT64 GenerateGUID()
-{
-	return ++g_GUID;
-	/*
-	GUID * pguid = new GUID;
-	CoCreateGuid(pguid);
-	return *(UINT64*)pguid->Data4;
-	*/
-}
+
+static unsigned long long g_GUID = 1;
+unsigned long long GenerateGUID();
 
 #endif

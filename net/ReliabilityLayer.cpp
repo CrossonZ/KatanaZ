@@ -157,7 +157,7 @@ bool CReliabilityLayer::PushNetworkPkg(SNetworkPkg *pPkg)
 	gpConnectionManager->DeallocNetworkPkg(pPkg);
 	SSendWindow sSW;
 	sSW.pSS = pSS;
-	//sSW.dwSendTime = GetTickCount();
+	sSW.dwSendTime = GetTickCount();
 	sSW.iResendTimes = 0;
 	m_SendWindowMutex.Lock();
 	m_conSendWindow.push_back(sSW);
@@ -205,7 +205,7 @@ bool CReliabilityLayer::HandleSplitPkg(SCommonPkg *pCP, int iPkgSeq)
 			iOffset += pCommon->sCPH.iLen-4;
 			if (pCommon->pRS == NULL)
 			{
-				//printf("FUCKING occurs!\n");
+				printf("FUCKING occurs!\n");
 			}
 			else
 			{
@@ -409,7 +409,7 @@ int CReliabilityLayer::HandleSendPkg()
 
 int CReliabilityLayer::CheckResendPkg()
 {
-	DWORD dwTickCount = 0;//GetTickCount();
+	DWORD dwTickCount = GetTickCount();
 	int  iStatus = NS_IDLE;
 	int i=0;
 	m_SendWindowMutex.Lock();
@@ -525,11 +525,11 @@ void CReliabilityLayer::HandleSendWindow(int iAckSeq)
 {
 	if (iAckSeq > m_iLastACKSeq)
 	{
-		DWORD dwTick = 0;//GetTickCount();
+		DWORD dwTick = GetTickCount();
 		int i, iLast = m_iLastDeleteOffset+iAckSeq-m_iLastACKSeq - 1;
 		if (iLast < 0 || iLast >= m_conSendWindow.size())
 		{
-			//printf("Fucking Occurs, iLast:%d , m_conSendWindowSize:%d\n",iLast, m_conSendWindow.size());
+			printf("Fucking Occurs, iLast:%d , m_conSendWindowSize:%d\n",iLast, m_conSendWindow.size());
 			return;
 		}
 

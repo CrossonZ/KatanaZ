@@ -11,13 +11,14 @@
 
 #include "../tools/Singleton.h"
 #include "../tools/SimpleMutex.h"
+#include "../tools/Utility.h"
 #if USE_POOL == 1
 #include "../tools/ObjectPool.h"
 #endif
 #include "ReliabilityLayer.h"
 #include "UDPSocket.h"
 #include <queue>
-;
+
 
 #if USE_BOOST == 1
 #include <boost/function.hpp>
@@ -195,6 +196,9 @@ public:
 private:
 #ifdef _WIN32
 	WSADATA m_wsaData; // 套接字信息数据
+
+#else
+
 #endif
 
 	//用于select

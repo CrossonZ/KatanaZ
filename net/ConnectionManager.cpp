@@ -1,11 +1,9 @@
 #include "ConnectionManager.h"
 #include "../tools/UDPThread.h"
-#include "../tools/Utility.h"
 #include "../game/LogicThread.h"
 #include <time.h>
 
 #define BUFSIZE 1024
-;
 
 #ifdef DEBUG_NEW
 //#include "../tools/DebugNew.h"
@@ -19,7 +17,7 @@ unsigned __stdcall StartRecvThread(void *arguments)
 	pSock->RecvFromSocket();
 	return 1;
 }
-//
+
 unsigned __stdcall StartSendThread(void *arguments)
 {
 	CUDPSocket *pSock = (CUDPSocket *)arguments;//pArg->pSocket;
@@ -37,6 +35,9 @@ unsigned __stdcall StartLogicThread(void *arguments)
 #else
 void *StartRecvThread(void *arguments)
 {
+#ifdef FOR_TEST
+	printf("Create StartRecvThread success\n");
+#endif
 	CUDPSocket *pSock = (CUDPSocket *)arguments;
 	pSock->RecvFromSocket();
 	return 0;
@@ -44,6 +45,9 @@ void *StartRecvThread(void *arguments)
 //
 void *StartSendThread(void *arguments)
 {
+#ifdef FOR_TEST
+	printf("Create StartSendThread success\n");
+#endif
 	CUDPSocket *pSock = (CUDPSocket *)arguments;//pArg->pSocket;
 	pSock->SendToSocket();
 	return 0;
@@ -51,6 +55,9 @@ void *StartSendThread(void *arguments)
 
 void *StartLogicThread(void *arguments)
 {
+#ifdef FOR_TEST
+	printf("Create StartLogicThread success\n");
+#endif
 	CLogicThread *pLT = (CLogicThread *)arguments;
 	pLT->ThreadLoop();
 	return 0;
@@ -99,6 +106,12 @@ bool CConnectionManager::Init()
 	g_iPushTimes = 0;
 	g_iAllocTimes = 0;
 	m_byLastLT = 0;
+
+#ifdef _WIN32
+
+#else
+	gettimeofday(&g_startTime,NULL);
+#endif
 	return true;
 }
 
@@ -111,7 +124,7 @@ void CConnectionManager::UnInit()
 		*itList = NULL;
 	}
 	m_conSocketList.clear();
-#ifdef _WIND32
+#ifdef _WIN32
 	WSACleanup();
 #endif
 }
@@ -167,7 +180,7 @@ bool CConnectionManager::Start(vector<WORD> &conPortVector)
 		m_funcAddRSCallback = boost::bind(&CLogicThread::PushRS, pLT, _1);*/
 		m_conLTList.push_back(pLT);
 	}
-
+	printf("Server Start Success...\n");
 	ThreadLoop();
 
 	return false;
@@ -200,9 +213,8 @@ void CConnectionManager::ThreadLoop()
 				{
 					qwToken = GenerateGUID();
 					//pRL = AddReliableLayer(qwToken, pRS->sAddr, pRS->pSock);
-					CLogicThread *pLT = GetLTFromList();
+					pLT = GetLTFromList();
 					RecordRL(qwToken, pRS->sAddr, pLT);
-
 					SSendStruct *pSS = gpConnectionManager->CreateConnectRsp(qwToken, pRS->sAddr, NULL/*pRL*/);
 					if (pSS != NULL)
 					{
@@ -213,7 +225,7 @@ void CConnectionManager::ThreadLoop()
 			case NPT_CONNECTION_RSP:
 				{
 					//gpConnectionManager->AddReliableLayer(pNPH->qwToken, pRS->sAddr, pRS->pSock);
-					CLogicThread *pLT = GetLTFromList();
+					pLT = GetLTFromList();
 					RecordRL(pNPH->qwToken, pRS->sAddr, pLT);
 					gpConnectionManager->SetMyToken(pNPH->qwToken);
 					DeallocRecvStruct(pRS);
@@ -295,6 +307,7 @@ void CConnectionManager::RecordRL(UINT64 qwToken, sockaddr_in sAddr, CLogicThrea
 		////////////////////
 		//m_funcAddRLCallback(pRL);
 		pLT->AddReliabilityLayer(pRL);
+		printf("New connection comes, token:%llu\n",qwToken);
 	}
 }
 

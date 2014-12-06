@@ -74,6 +74,9 @@ void CUDPSocket::HandleRecv(SRecvStruct *pRS)
 	while (1)
 	{
 		pRS->iLen = recvfrom(m_sock, pRS->szBuf, sizeof(pRS->szBuf), flag, (sockaddr *)&pRS->sAddr, &iLen);
+#ifdef FOR_TEST
+		printf("recv one package\n");
+#endif
 #ifdef _WIN32
 		if (pRS->iLen < 0 && WSAGetLastError() == WSAEWOULDBLOCK)
 		{
@@ -107,7 +110,7 @@ void CUDPSocket::RecvFromSocket()
 				if (!m_pEH->OnRecv(pRS))
 #endif
 				{
-					//printf("-------------FUCK------------\n");
+					printf("-------------FUCK------------\n");
 					m_pEH->DeallocRecvStruct(pRS);
 				}
 			}
@@ -121,7 +124,7 @@ void CUDPSocket::RecvFromSocket()
 		}
 		else
 		{
-			//printf("--------------------FUCKING-----------------------------------\n");
+			printf("--------------------FUCKING-----------------------------------\n");
 			exit(-1);
 		}
 	}

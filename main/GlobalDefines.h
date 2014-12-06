@@ -37,6 +37,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <string.h>
+#include <stddef.h>
 #endif
 
 #define UINT64 unsigned long long
@@ -45,17 +46,20 @@
 #define BYTE   unsigned char
 
 #ifdef USE_STL
-#include<string>
-#include<map>
-#include<set>
-#include<list>
-#include<vector>
+#include <string>
+#include <map>
+#include <set>
+#include <list>
+#include <vector>
 #include <iostream>
 #include <stdlib.h>
+#include <stdio.h>
 using namespace std;
 #endif
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+#else
 #define Sleep sleep
 #endif
 
