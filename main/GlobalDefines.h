@@ -23,6 +23,8 @@
 
 #define USE_BOOST 0
 
+#define USE_EPOLL 0
+
 #ifdef _WIN32
 #include <WinSock2.h>
 #include <windows.h>
@@ -34,6 +36,7 @@
 #include <arpa/inet.h>    
 #include <fcntl.h>    
 #include <unistd.h>
+#include <errno.h>
 #include <cstdlib>
 #include <cstdio>
 #include <string.h>

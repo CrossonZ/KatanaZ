@@ -80,6 +80,8 @@ void *StartRecvThread(void *arguments);
 void *StartSendThread(void *arguments);
 
 void *StartLogicThread(void *arguments);
+
+void *StartHandleEpollThread(void *arguments);
 #endif 
 
 //VOID NTAPI StartSendCallBack(PTP_CALLBACK_INSTANCE pInstance, PVOID pvContext, PTP_WORK Work);
@@ -192,14 +194,16 @@ public:
 	int g_iPopTimes;
 	int g_iPushTimes;
 	int g_iAllocTimes;
-
-private:
 #ifdef _WIN32
 	WSADATA m_wsaData; // 套接字信息数据
 
 #else
-
+	struct epoll_event m_event;
+	struct epoll_event *m_events;
+	int m_efd;
 #endif
+private:
+
 
 	//用于select
 	timeval m_tvTimer;    // 定时变量  

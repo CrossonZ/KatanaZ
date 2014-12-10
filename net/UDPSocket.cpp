@@ -59,7 +59,24 @@ void CUDPSocket::SetSockOpt(const bool bBlocking, const bool bIPHdr)
 	DWORD dwBytesReturned = 0;
 	WSAIoctl(m_sock, SIO_UDP_CONNRESET, &BNewBehavior, sizeof(BNewBehavior), NULL, 0, &dwBytesReturned, NULL, NULL);
 #else
+	//if (bBlocking
+	int flags, s;  
+	//得到文件状态标志  
+	flags = fcntl (m_sock, F_GETFL, 0);  
+	if (flags == -1)  
+	{  
+		perror ("fcntl");  
+		return;  
+	}  
 
+	//设置文件状态标志  
+	flags |= O_NONBLOCK;  
+	s = fcntl (m_sock, F_SETFL, flags);  
+	if (s == -1)  
+	{  
+		perror ("fcntl");  
+		return;  
+	}  
 #endif
 }
 
@@ -73,18 +90,32 @@ void CUDPSocket::HandleRecv(SRecvStruct *pRS)
 	const int flag = 0;
 	while (1)
 	{
-		pRS->iLen = recvfrom(m_sock, pRS->szBuf, sizeof(pRS->szBuf), flag, (sockaddr *)&pRS->sAddr, &iLen);
 #ifdef FOR_TEST
 		printf("recv one package\n");
 #endif
 #ifdef _WIN32
+		pRS->iLen = recvfrom(m_sock, pRS->szBuf, sizeof(pRS->szBuf), flag, (sockaddr *)&pRS->sAddr, &iLen);
+
 		if (pRS->iLen < 0 && WSAGetLastError() == WSAEWOULDBLOCK)
 		{
-			Sleep(50);
+			Sleep(1);
 			continue;
 		}
 #else
-
+		int iRet = recvfrom(m_sock, pRS->szBuf, sizeof(pRS->szBuf), flag, (sockaddr *)&pRS->sAddr, &iLen);
+		if (iRet == -1)
+		{
+			printf("return -1, errno = %d\n", errno);
+			if (errno == EAGAIN  || errno == EWOULDBLOCK)
+			{
+				Sleep(1);
+				continue;
+			}
+		}
+		else
+		{
+			printf("recvnum:%d\n",iRet);
+		}
 #endif
 		break;
 	}
@@ -116,7 +147,7 @@ void CUDPSocket::RecvFromSocket()
 			}
 			else
 			{
-				Sleep(50);
+				Sleep(1);
 
 				m_pEH->DeallocRecvStruct(pRS);
 				//break;
@@ -138,27 +169,34 @@ void CUDPSocket::SendToSocket()
 	{
 		if ((pSS=gpConnectionManager->PopSS()) == NULL)
 		{
-			Sleep(100);
+			Sleep(1);
 			continue;
 		}
 		int iOffset = 0;
+		printf("Prepare to send\n");
 		while (1)
 		{
 			iSent = sendto(this->m_sock, pSS->pBuf+iOffset, pSS->iLen-iOffset, 0, (sockaddr*)&pSS->sAddr, sizeof(pSS->sAddr));
 #ifdef _WIN32
 			if (iSent == -1 && WSAGetLastError() == WSAEWOULDBLOCK)
 			{
-				Sleep(10);
+				Sleep(1);
 				continue;
 			}
 #else 
-			if (1)
+			if (iSent == -1)
 			{
-
+				printf("send return -1, errno = %d\n", errno);
+				if (errno == EAGAIN  || errno == EWOULDBLOCK)
+				{
+					Sleep(1);
+					continue;
+				}
 			}
 #endif
 			else if ((iOffset += iSent) == pSS->iLen)
 			{
+				printf("send succuss len:%d\n", iOffset);
 				break;
 			}
 

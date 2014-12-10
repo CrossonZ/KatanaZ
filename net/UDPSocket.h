@@ -24,7 +24,11 @@ public:
 	int Bind(CConnectionManager *pEH, const WORD wPort, const bool bBlocking, const bool bIPHdr);
 	void RecvFromSocket();
 	void SendToSocket();
-	//SOCKET GetSocket() {return m_sock;}
+#ifdef _WIN32
+	SOCKET GetSocket() {return m_sock;}
+#else
+	int GetSocket() {return m_sock;}
+#endif
 
 private:
 	void SetSockOpt(const bool bBlocking, const bool bIPHdr);

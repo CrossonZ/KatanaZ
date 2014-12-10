@@ -62,8 +62,73 @@ void *StartLogicThread(void *arguments)
 	pLT->ThreadLoop();
 	return 0;
 }
-#endif
 
+void *StartHandleEpollThread(void *arguments)
+{
+	int n, i;
+	CConnectionManager *pCM = (CConnectionManager*)arguments;
+	while (1)
+	{
+		n = epoll_wait(pCM->m_efd, pCM->m_events, 4, -1);
+		for (i=0;i<n;++i)
+		{
+			if ((pCM->m_events[i].events & EPOLLERR) ||
+				(pCM->m_events[i].events & EPOLLHUP) ||
+				(!(pCM->m_events[i].events & EPOLLIN)))
+			{
+				perror("epoll error!\n");
+				close(gpConnectionManager->m_events[i].data.fd);
+				continue;
+			}
+			else
+			{
+				SRecvStruct *pRS = pCM->AllocRecvStruct();
+				if (pRS != NULL)
+				{
+					pRS->iRefCount = 1;
+					const int flag = 0;
+					while (1)
+					{
+						socklen_t iLen = sizeof(pRS->sAddr);
+						int iRet = recvfrom(pCM->m_events[i].data.fd, pRS->szBuf, sizeof(pRS->szBuf), flag, (sockaddr *)&pRS->sAddr, &iLen);
+						if (iRet == -1)
+						{
+							if (errno == EAGAIN  || errno == EWOULDBLOCK)
+							{
+								break;
+							}
+							else
+								printf("return -1, errno = %d\n", errno);
+						}
+						else
+						{
+							printf("recvnum:%d\n",iRet);
+						}
+						if ((pRS->iLen=iRet) >= NETWORK_PKG_HEAD_LEN)
+						{
+#if USE_BOOST == 1
+							if (!m_funcOnRecv(pRS))
+#else
+							if (!pCM->OnRecv(pRS))
+#endif
+							{
+								printf("-------------FUCK------------\n");
+								pCM->DeallocRecvStruct(pRS);
+							}
+						}
+						else
+						{				
+							pCM->DeallocRecvStruct(pRS);
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+	
+}
+#endif
 /*VOID NTAPI StartSendCallBack(PTP_CALLBACK_INSTANCE pInstance, PVOID pvContext, PTP_WORK Work)
 {
 	//SSendThreadArg * pArg = (SSendThreadArg *)pvContext;
@@ -126,6 +191,10 @@ void CConnectionManager::UnInit()
 	m_conSocketList.clear();
 #ifdef _WIN32
 	WSACleanup();
+#else
+#if USE_EPOLL == 1
+	close(m_efd);
+#endif
 #endif
 }
 
@@ -136,7 +205,16 @@ bool CConnectionManager::Start(vector<WORD> &conPortVector)
 	{  
 		perror("failed to load winsock!\n");  
 		return false;  
-	}  
+	} 
+#else
+#if USE_EPOLL == 1
+	m_efd = epoll_create(conPortVector.size());
+	if (m_efd == -1)
+	{
+		perror("listen");
+	}
+	m_events = new struct epoll_event[conPortVector.size()];
+#endif
 #endif
 	m_tvTimer.tv_sec = 6;   
 	m_tvTimer.tv_usec = 0; 
@@ -162,11 +240,15 @@ bool CConnectionManager::Start(vector<WORD> &conPortVector)
 			return false;
 		}
 		m_conSocketList.push_back(pSocket);
-
+#if USE_EPOLL == 1
+		m_event.data.fd = pSocket->GetSocket();
+		m_event.events = EPOLLIN | EPOLLET;
+		epoll_ctl(m_efd, EPOLL_CTL_ADD, pSocket->GetSocket(), &m_event);
+#else
 		CUDPThread::Create(&StartRecvThread, pSocket, 0);
+
+#endif
 		CUDPThread::Create(&StartSendThread, pSocket, 0);
-
-
 	}
 
 	CLogicThread *pLT = NULL;
@@ -180,6 +262,9 @@ bool CConnectionManager::Start(vector<WORD> &conPortVector)
 		m_funcAddRSCallback = boost::bind(&CLogicThread::PushRS, pLT, _1);*/
 		m_conLTList.push_back(pLT);
 	}
+#if USE_EPOLL == 1
+	CUDPThread::Create(&StartHandleEpollThread, this, 0);
+#endif
 	printf("Server Start Success...\n");
 	ThreadLoop();
 
@@ -203,7 +288,7 @@ void CConnectionManager::ThreadLoop()
 			pNPH = pRS->GetNetworkPkg();
 			if (pNPH == NULL)
 			{
-				//printf("Fucking error occurs, Fatal NPH\n");
+				perror("Fucking error occurs, Fatal NPH\n");
 				DeallocRecvStruct(pRS);
 				continue;
 			}
@@ -249,7 +334,7 @@ void CConnectionManager::ThreadLoop()
 		}
 		else
 		{
-			Sleep(50);
+			Sleep(1);
 		}
 	}
 }
@@ -719,9 +804,7 @@ SSinglePacket * CConnectionManager::GetRecvPacket()
 
 void CConnectionManager::RecycleReliableLayer(CReliabilityLayer *pRL)
 {
-
 	pRL->DeallocRL();
-
 	//m_RLMapMutex.Lock();
 	//m_conRLMap.erase(pRL->GetToken());
 	//m_RLMapMutex.Unlock();

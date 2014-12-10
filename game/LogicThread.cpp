@@ -64,7 +64,7 @@ void CLogicThread::ThreadLoop()
 		LoopPopRS();
 		//LoopPopSS();
 		LoopTraverseConnections();
-		Sleep(50);
+		Sleep(1);
 	}
 }
 

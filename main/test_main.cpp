@@ -20,7 +20,7 @@ int main()
 	SSinglePacket *pSP = NULL;
 	while (1)
 	{
-		Sleep(100);
+		Sleep(1);
 	}/*
 	//while (1)
 	//{
