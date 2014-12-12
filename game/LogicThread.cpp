@@ -32,14 +32,14 @@ CReliabilityLayer *CLogicThread::GetRL(const UINT64 qwToken)
 	return pRL;
 }
 
-void CLogicThread::PushRS(SRecvStruct *pRS)
+void CLogicThread::PushLTRS(SRecvStruct *pRS)
 {
 	m_RSQueueMutex.Lock();
 	m_conRSQueue.push(pRS);
 	m_RSQueueMutex.Unlock();
 }
 
-SRecvStruct *CLogicThread::PopRS()
+SRecvStruct *CLogicThread::PopLTRS()
 {
 	SRecvStruct *pRS = NULL;
 	m_RSQueueMutex.Lock();
@@ -73,11 +73,11 @@ void CLogicThread::LoopPopRS()
 	SRecvStruct *pRS = NULL;
 	SNetworkPkgHeader *pNPH = NULL;
 	CReliabilityLayer *pRL = NULL;
-	while ((pRS = PopRS()) != NULL)
+	while ((pRS = PopLTRS()) != NULL)
 	{
 		pNPH = pRS->GetNetworkPkg();
-		pRL = GetRL(pNPH->qwToken);
-		switch (pNPH->byPkgType)
+		pRL = GetRL(pNPH->sDH.qwToken);
+		switch (pNPH->sDH.byPkgType)
 		{
 		case NPT_ACK:
 			{

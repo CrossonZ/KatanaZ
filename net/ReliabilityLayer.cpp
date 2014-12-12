@@ -327,8 +327,8 @@ int CReliabilityLayer::HandleSendPkg()
 			if (m_pCurrentNP == NULL)
 			{
 				m_pCurrentNP = gpConnectionManager->AllocNetworkPkg();
-				m_pCurrentNP->sNPH.byPkgType = NPT_COMMON_MSG;
-				m_pCurrentNP->sNPH.qwToken = m_qwToken;
+				m_pCurrentNP->sNPH.sDH.byPkgType = NPT_COMMON_MSG;
+				m_pCurrentNP->sNPH.sDH.qwToken = m_qwToken;
 				m_pCurrentNP->pBuf = gpConnectionManager->AllocBuffer(MAX_MTU_SIZE);
 				m_iRemainSize = MAX_MTU_SIZE;
 				m_pCurrentNP->sNPH.iTotalLen = 0;
@@ -350,8 +350,8 @@ int CReliabilityLayer::HandleSendPkg()
 				PushNetworkPkg(m_pCurrentNP);
 			}
 			m_pCurrentNP = gpConnectionManager->AllocNetworkPkg();
-			m_pCurrentNP->sNPH.byPkgType = NPT_COMMON_MSG;
-			m_pCurrentNP->sNPH.qwToken = m_qwToken;
+			m_pCurrentNP->sNPH.sDH.byPkgType = NPT_COMMON_MSG;
+			m_pCurrentNP->sNPH.sDH.qwToken = m_qwToken;
 			m_pCurrentNP->pBuf = gpConnectionManager->AllocBuffer(MAX_MTU_SIZE);
 			m_iRemainSize = MAX_MTU_SIZE;
 			m_pCurrentNP->sNPH.iTotalLen = 0;
@@ -378,8 +378,8 @@ int CReliabilityLayer::HandleSendPkg()
 				int iSmall2 = MAX_MTU_SIZE-sizeof(SCommonPkgHead)-sizeof(int);
 				iCurrentLen = min(iSmall1, iSmall2);
 				m_pCurrentNP = gpConnectionManager->AllocNetworkPkg();
-				m_pCurrentNP->sNPH.byPkgType = NPT_COMMON_MSG;
-				m_pCurrentNP->sNPH.qwToken = m_qwToken;
+				m_pCurrentNP->sNPH.sDH.byPkgType = NPT_COMMON_MSG;
+				m_pCurrentNP->sNPH.sDH.qwToken = m_qwToken;
 				m_pCurrentNP->pBuf = gpConnectionManager->AllocBuffer(MAX_MTU_SIZE);
 				m_iRemainSize = MAX_MTU_SIZE;
 				m_pCurrentNP->sNPH.iTotalLen = 0;
@@ -602,9 +602,9 @@ void CReliabilityLayer::BuildACK(const int iACKSeq)
 	pSS->pBuf = gpConnectionManager->AllocBuffer(pSS->iLen);
 	pSS->eSPF = SPF_NO_ACK;
 	SNetworkPkgHeader sNPH;
-	sNPH.byPkgType = NPT_ACK;
+	sNPH.sDH.byPkgType = NPT_ACK;
 	sNPH.iSeq = iACKSeq;
-	sNPH.qwToken = m_qwToken;
+	sNPH.sDH.qwToken = m_qwToken;
 	sNPH.iTotalLen = 0;
 	memcpy(pSS->pBuf, (char *)&sNPH, NETWORK_PKG_HEAD_LEN);
 	gpConnectionManager->OnSend(pSS);
@@ -620,9 +620,9 @@ void CReliabilityLayer::BuildTrafficControl(const int iRecvWindowBegin)
 	pSS->pBuf = gpConnectionManager->AllocBuffer(pSS->iLen);
 	pSS->eSPF = SPF_NO_ACK;
 	SNetworkPkgHeader sNPH;
-	sNPH.byPkgType = NPT_TRAFFIC_CONTROL;
+	sNPH.sDH.byPkgType = NPT_TRAFFIC_CONTROL;
 	sNPH.iSeq = iRecvWindowBegin;
-	sNPH.qwToken = m_qwToken;
+	sNPH.sDH.qwToken = m_qwToken;
 	sNPH.iTotalLen = 0;
 	memcpy(pSS->pBuf, (char *)&sNPH, NETWORK_PKG_HEAD_LEN);
 	//memcpy(pSS->pBuf+NETWORK_PKG_HEAD_LEN, (char *)&iRecvWindowBegin, 4);

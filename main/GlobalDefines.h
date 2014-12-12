@@ -23,7 +23,7 @@
 
 #define USE_BOOST 0
 
-#define USE_EPOLL 0
+#define USE_EPOLL 1
 
 #ifdef _WIN32
 #include <WinSock2.h>
@@ -63,7 +63,7 @@ using namespace std;
 #ifdef _WIN32
 
 #else
-#define Sleep sleep
+#define Sleep usleep
 #endif
 
 #endif

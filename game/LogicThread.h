@@ -14,8 +14,8 @@ public:
 
 	CReliabilityLayer *GetRL(const UINT64 qwToken);
 
-	void PushRS(SRecvStruct *pRS);
-	SRecvStruct *PopRS();
+	void PushLTRS(SRecvStruct *pRS);
+	SRecvStruct *PopLTRS();
 
 	void PushSS(SSendStruct *pSS);
 

@@ -66,10 +66,12 @@ void *StartLogicThread(void *arguments)
 void *StartHandleEpollThread(void *arguments)
 {
 	int n, i;
+	bool bEagain = false;
 	CConnectionManager *pCM = (CConnectionManager*)arguments;
+	SRecvStruct *pRS = NULL;
 	while (1)
 	{
-		n = epoll_wait(pCM->m_efd, pCM->m_events, 4, -1);
+		n = epoll_wait(pCM->m_efd, pCM->m_events, 4, 500);
 		for (i=0;i<n;++i)
 		{
 			if ((pCM->m_events[i].events & EPOLLERR) ||
@@ -82,27 +84,29 @@ void *StartHandleEpollThread(void *arguments)
 			}
 			else
 			{
-				SRecvStruct *pRS = pCM->AllocRecvStruct();
-				if (pRS != NULL)
+				while (1)
 				{
-					pRS->iRefCount = 1;
-					const int flag = 0;
-					while (1)
+					if (!bEagain)
 					{
+						pRS = pCM->AllocRecvStruct();
+					}
+					if (pRS != NULL)
+					{
+						pRS->iRefCount = 1;
+						const int flag = 0;
+						int iOffset = 0;
+
 						socklen_t iLen = sizeof(pRS->sAddr);
-						int iRet = recvfrom(pCM->m_events[i].data.fd, pRS->szBuf, sizeof(pRS->szBuf), flag, (sockaddr *)&pRS->sAddr, &iLen);
+						int iRet = recvfrom(pCM->m_events[i].data.fd, pRS->szBuf+iOffset, sizeof(pRS->szBuf)-iOffset, flag, (sockaddr *)&pRS->sAddr, &iLen);
 						if (iRet == -1)
 						{
 							if (errno == EAGAIN  || errno == EWOULDBLOCK)
 							{
+								bEagain = true;
 								break;
 							}
 							else
 								printf("return -1, errno = %d\n", errno);
-						}
-						else
-						{
-							printf("recvnum:%d\n",iRet);
 						}
 						if ((pRS->iLen=iRet) >= NETWORK_PKG_HEAD_LEN)
 						{
@@ -115,18 +119,18 @@ void *StartHandleEpollThread(void *arguments)
 								printf("-------------FUCK------------\n");
 								pCM->DeallocRecvStruct(pRS);
 							}
+							bEagain = false;
 						}
 						else
 						{				
 							pCM->DeallocRecvStruct(pRS);
-							break;
+							bEagain = false;
 						}
 					}
 				}
 			}
 		}
 	}
-	
 }
 #endif
 /*VOID NTAPI StartSendCallBack(PTP_CALLBACK_INSTANCE pInstance, PVOID pvContext, PTP_WORK Work)
@@ -274,25 +278,23 @@ bool CConnectionManager::Start(vector<WORD> &conPortVector)
 void CConnectionManager::ThreadLoop()
 {
 	SRecvStruct *pRS = NULL;
-	SNetworkPkgHeader *pNPH = NULL;
+	//SNetworkPkgHeader *pNPH = NULL;
+	SDispatchHeader *pDH = NULL;
 	CReliabilityLayer *pRL = NULL;
 	CLogicThread *pLT = NULL;
-	int iOffset = 0;
 	UINT64 qwToken = 0;
-	while (true)  
+	while (1)
 	{
-		pRS = PopRS();
-		if (pRS != NULL)
+		if ((pRS = PopRS())!=NULL)
 		{
-			iOffset = 0;
-			pNPH = pRS->GetNetworkPkg();
-			if (pNPH == NULL)
+			pDH = pRS->GetDH();
+			if (pDH == NULL)
 			{
-				perror("Fucking error occurs, Fatal NPH\n");
+				perror("Fucking error occurs, Fatal DH\n");
 				DeallocRecvStruct(pRS);
 				continue;
 			}
-			switch (pNPH->byPkgType)
+			switch (pDH->byPkgType)
 			{
 			case NPT_CONNECTION_REQ:
 				{
@@ -311,8 +313,8 @@ void CConnectionManager::ThreadLoop()
 				{
 					//gpConnectionManager->AddReliableLayer(pNPH->qwToken, pRS->sAddr, pRS->pSock);
 					pLT = GetLTFromList();
-					RecordRL(pNPH->qwToken, pRS->sAddr, pLT);
-					gpConnectionManager->SetMyToken(pNPH->qwToken);
+					RecordRL(pDH->qwToken, pRS->sAddr, pLT);
+					gpConnectionManager->SetMyToken(pDH->qwToken);
 					DeallocRecvStruct(pRS);
 				}break;
 			case NPT_ACK:
@@ -320,11 +322,11 @@ void CConnectionManager::ThreadLoop()
 			case NPT_COMMON_MSG:
 			case NPT_FIN:
 				{
-					pLT = GetLT(pNPH->qwToken);
+					pLT = GetLT(pDH->qwToken);
 					if (pLT != NULL)
 					{
 						//m_funcAddRSCallback(pRS);
-						pLT->PushRS(pRS);
+						pLT->PushLTRS(pRS);
 					}	
 				}break;
 			default:
@@ -337,6 +339,7 @@ void CConnectionManager::ThreadLoop()
 			Sleep(1);
 		}
 	}
+
 }
 
 CLogicThread* CConnectionManager::GetLTFromList()
@@ -392,7 +395,6 @@ void CConnectionManager::RecordRL(UINT64 qwToken, sockaddr_in sAddr, CLogicThrea
 		////////////////////
 		//m_funcAddRLCallback(pRL);
 		pLT->AddReliabilityLayer(pRL);
-		printf("New connection comes, token:%llu\n",qwToken);
 	}
 }
 
@@ -861,7 +863,7 @@ SSendStruct *CConnectionManager::CreateConnectReq(sockaddr_in sAddr, CReliabilit
 	pSS->iLen = NETWORK_PKG_HEAD_LEN;
 	pSS->pBuf = gpConnectionManager->AllocBuffer(pSS->iLen);
 	SNetworkPkgHeader sNPH;
-	sNPH.byPkgType = NPT_CONNECTION_REQ;
+	sNPH.sDH.byPkgType = NPT_CONNECTION_REQ;
 	sNPH.iTotalLen = 0;
 	memcpy(pSS->pBuf, &sNPH, NETWORK_PKG_HEAD_LEN);
 	pSS->eSPF = SPF_NO_ACK;
@@ -877,8 +879,8 @@ SSendStruct *CConnectionManager::CreateConnectRsp(UINT64 qwToken, sockaddr_in sA
 	pSS->iLen = NETWORK_PKG_HEAD_LEN;
 	pSS->pBuf = gpConnectionManager->AllocBuffer(pSS->iLen);
 	SNetworkPkgHeader sNPH;
-	sNPH.byPkgType = NPT_CONNECTION_RSP;
-	sNPH.qwToken = qwToken;
+	sNPH.sDH.byPkgType = NPT_CONNECTION_RSP;
+	sNPH.sDH.qwToken = qwToken;
 	sNPH.iTotalLen = 0;
 	memcpy(pSS->pBuf, &sNPH, NETWORK_PKG_HEAD_LEN);
 	pSS->eSPF = SPF_NO_ACK;

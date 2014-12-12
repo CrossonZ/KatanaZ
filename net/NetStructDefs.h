@@ -40,13 +40,21 @@ struct SObject
 	void SetObjectID(DWORD dwID) {m_dwObjectID = dwID;}
 	DWORD m_dwObjectID;
 };
-struct SNetworkPkgHeader
+
+struct SDispatchHeader
 {
-	SNetworkPkgHeader():byPkgType(NPT_START),qwToken(0),iSeq(0),iTotalLen(0)
+	SDispatchHeader():byPkgType(NPT_START),qwToken(0)
 	{
 	}
 	BYTE byPkgType; //
 	UINT64 qwToken;
+};
+struct SNetworkPkgHeader
+{
+	SNetworkPkgHeader():iSeq(0),iTotalLen(0)
+	{
+	}
+	SDispatchHeader sDH;
 	int iSeq;
 	int iTotalLen;
 };
@@ -60,6 +68,7 @@ struct SNetworkPkg: public SObject
 #pragma pack()
 
 #define NETWORK_PKG_HEAD_LEN 17
+#define DISPATCH_HEAD_LEN 9
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -135,6 +144,11 @@ struct SRecvStruct: public SObject
 		++iRefCount;
 		m_iOffset += iReadLen;
 		return szBuf + m_iOffset;
+	}
+
+	SDispatchHeader *GetDH()
+	{
+		return DISPATCH_HEAD_LEN > iLen ? NULL : (SDispatchHeader *)szBuf;
 	}
 
 	SNetworkPkgHeader *GetNetworkPkg()

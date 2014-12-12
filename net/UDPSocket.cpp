@@ -90,9 +90,6 @@ void CUDPSocket::HandleRecv(SRecvStruct *pRS)
 	const int flag = 0;
 	while (1)
 	{
-#ifdef FOR_TEST
-		printf("recv one package\n");
-#endif
 #ifdef _WIN32
 		pRS->iLen = recvfrom(m_sock, pRS->szBuf, sizeof(pRS->szBuf), flag, (sockaddr *)&pRS->sAddr, &iLen);
 
@@ -111,10 +108,6 @@ void CUDPSocket::HandleRecv(SRecvStruct *pRS)
 				Sleep(1);
 				continue;
 			}
-		}
-		else
-		{
-			printf("recvnum:%d\n",iRet);
 		}
 #endif
 		break;
@@ -173,7 +166,6 @@ void CUDPSocket::SendToSocket()
 			continue;
 		}
 		int iOffset = 0;
-		printf("Prepare to send\n");
 		while (1)
 		{
 			iSent = sendto(this->m_sock, pSS->pBuf+iOffset, pSS->iLen-iOffset, 0, (sockaddr*)&pSS->sAddr, sizeof(pSS->sAddr));
@@ -196,7 +188,6 @@ void CUDPSocket::SendToSocket()
 #endif
 			else if ((iOffset += iSent) == pSS->iLen)
 			{
-				printf("send succuss len:%d\n", iOffset);
 				break;
 			}
 
